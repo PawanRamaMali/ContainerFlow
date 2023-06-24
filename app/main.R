@@ -27,7 +27,8 @@ ui <- function(id) {
       Card(
         interactive = TRUE,
         H4("Select Image"),
-        uiOutput(ns("images_dropdown"))))
+        uiOutput(ns("images_dropdown")))
+      )
     ))
   )
 }
