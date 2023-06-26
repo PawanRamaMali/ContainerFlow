@@ -1,11 +1,14 @@
 box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput, fluidRow,
-        fluidPage, column, br, textInput, actionLink, ],
-  shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button,
-                  Card, Select.shinyInput, H4, H5, ],
+        fluidPage, column, br, textInput, actionLink, observeEvent, tagList,
+        reactiveVal, req, renderPrint, verbatimTextOutput, ],
+  shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button, Pre, Collapse,
+                  Card, Select.shinyInput, H4, H5, renderReact, Button.shinyInput,
+                  reactOutput, ],
   shiny.fluent[DetailsList, Stack, DefaultButton.shinyInput,
                TextField.shinyInput, ],
-  httr[GET, add_headers, http_type, content, ],
+  httr[GET, POST, add_headers, http_type, content, ],
+  jsonlite[toJSON, ],
 )
 
 #' @export
@@ -33,7 +36,7 @@ ui <- function(id) {
       br(),
       Card(
         interactive = TRUE,
-        H5("Config Container"),
+        H5("Create Container"),
         Stack(
           TextField.shinyInput(inputId = ns("container_name"),
                     label = "Container Name", value = "alpha_test"),
@@ -41,7 +44,10 @@ ui <- function(id) {
                                label = "Port Number", value = "8081"),
           horizontal = TRUE,
           tokens = list(childrenGap = 20)
-        )),
+        ),
+        br(),
+        DefaultButton.shinyInput(inputId = ns("create_container_btn"),
+                                 text = "Create Container")),
       br(),
       Card(
         interactive = TRUE,
@@ -57,7 +63,16 @@ ui <- function(id) {
                                    text = "Delete Container"),
           horizontal = TRUE,
           tokens = list(childrenGap = 20)
-        ))
+        )),
+      br(),
+      Card(
+        interactive = TRUE,
+        tagList(
+          Button.shinyInput(ns("logs"), "View logs"),
+          reactOutput(ns("logs_ui")),
+          verbatimTextOutput("response")
+        ),
+        )
       )
     ))
   )
@@ -67,7 +82,20 @@ ui <- function(id) {
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    baseURL <- "http://localhost:2375/v1.41/containers/"
     headers <- c("Content-Type" = "application/json")
+    logs <- Pre(
+      "[11:53:30] Finished 'typescript-bundle-blueprint' after 769 ms\n",
+      "[11:53:30] Starting 'typescript-typings-blueprint'...\n",
+      "[11:53:30] Finished 'typescript-typings-blueprint' after 198 ms\n",
+      "[11:53:30] write ./blueprint.css\n",
+      "[11:53:30] Finished 'sass-compile-blueprint' after 2.84 s\n"
+    )
+    show <- reactiveVal(FALSE)
+    observeEvent(input$logs, show(!show()))
+    output$logs_ui <- renderReact({
+      Collapse(isOpen = show(), logs)
+    })
     output$images_dropdown <- renderUI({
       tryCatch({
         url <- "http://localhost:2375/v1.41/images/json"
@@ -100,6 +128,31 @@ server <- function(id) {
         # Error handling code
         div(class = "error", "Unable to connect with Docker API")
       })
+    })
+    
+    # Create Container
+    observeEvent(input$create_container_btn, {
+      req(input$container_name)
+      url <- paste0(baseURL, "create?name=", input$container_name)
+      body <- list(
+        Hostname = "localhost",
+        ExposedPorts = list("3838/tcp" = list()),
+        HostConfig = list(
+          PortBindings = list("3838/tcp" = list(list("HostPort" = paste0(input$container_port))))
+        ),
+        Image = paste0(input$select_images)
+      )
+      print(paste("Selected Image is ", input$select_images))
+      response <- POST(url, add_headers(headers), body = toJSON(body))
+      output$response <- renderPrint(handleAPICallError(response))
+    })
+    
+    # Start Container
+    observeEvent(input$start_container_btn, {
+      req(input$container_name)
+      url <- paste0(baseURL, input$containerName, "/start")
+      response <- POST(url, add_headers(headers), body = "")
+      output$response <- renderPrint(handleAPICallError(response))
     })
     
     # Function to handle API call errors
