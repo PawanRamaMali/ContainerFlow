@@ -1,6 +1,6 @@
 box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput, fluidRow,
-        fluidPage, column, br, textInput, actionLink ],
+        fluidPage, column, br, textInput, actionLink, ],
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button,
                   Card, Select.shinyInput, H4, H5, NumericInput.shinyInput, ],
   httr[GET, add_headers, http_type, content, ],
