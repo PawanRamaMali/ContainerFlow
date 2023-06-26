@@ -1,8 +1,8 @@
 box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput, fluidRow,
-        fluidPage, column, br, ],
+        fluidPage, column, br, textInput, actionLink ],
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button,
-                  Card, Select.shinyInput, H4, ],
+                  Card, Select.shinyInput, H4, H5, NumericInput.shinyInput, ],
   httr[GET, add_headers, http_type, content, ],
 )
 
@@ -12,7 +12,7 @@ ui <- function(id) {
   bootstrapPage(
     Navbar(
       NavbarGroup(
-        NavbarHeading("App Controller")
+        NavbarHeading("ContainerFlow")
       ),
       NavbarGroup(
         align = "right",
@@ -32,7 +32,18 @@ ui <- function(id) {
       Card(
         interactive = TRUE,
         H4("Create Container"),
-        uiOutput(ns("container_dropdown")))
+        textInput(inputId = ns("container_name"),
+                  label = "Container Name", value = ""),
+        H5("Container Port (optional)"),
+        NumericInput.shinyInput(
+          inputId = ns("container_port"),
+          intent = "primary",
+          value = 8081
+        ),
+        actionLink(inputId = ns("start_container_btn"),
+                   "Start Container"),
+        actionLink(inputId = ns("stop_container_btn"),
+                   "Stop Container"))
       )
     ))
   )
@@ -44,17 +55,21 @@ server <- function(id) {
     ns <- session$ns
     headers <- c("Content-Type" = "application/json")
     output$images_dropdown <- renderUI({
-      url <- "http://localhost:2375/v1.41/images/json"
-      response <- GET(url, add_headers(headers))
-      images <- unlist(process_response(response)$RepoTags)
-      Select.shinyInput(
-        inputId = ns("select_images"),
-        items = images,
-        selected = images[1],
-        noResults = "Not available"
-      )
+      tryCatch({
+        url <- "http://localhost:2375/v1.41/images/json"
+        response <- GET(url, add_headers(headers))
+        images <- unlist(process_response(response)$RepoTags)
+        Select.shinyInput(
+          inputId = ns("select_images"),
+          items = images,
+          selected = images[1],
+          noResults = "Not available"
+        )
+      }, error = function(e) {
+        # Error handling code
+        div(class = "error", "Unable to connect with Docker API")
+      })
     })
-
     # Function to handle API call errors
     handle_api_error <- function(response) {
       if (inherits(response, "response")) {
