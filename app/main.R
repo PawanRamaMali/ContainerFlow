@@ -2,7 +2,9 @@ box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput, fluidRow,
         fluidPage, column, br, textInput, actionLink, ],
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button,
-                  Card, Select.shinyInput, H4, H5, NumericInput.shinyInput, ],
+                  Card, Select.shinyInput, H4, H5, ],
+  shiny.fluent[DetailsList, Stack, DefaultButton.shinyInput,
+               TextField.shinyInput, ],
   httr[GET, add_headers, http_type, content, ],
 )
 
@@ -22,28 +24,40 @@ ui <- function(id) {
     ),
     fluidPage(
     fluidRow(column(2, ),
-             column(6,
+             column(8,
       br(),
       Card(
         interactive = TRUE,
-        H4("Select Image"),
+        H5("Select Image"),
         uiOutput(ns("images_dropdown"))),
       br(),
       Card(
         interactive = TRUE,
-        H4("Create Container"),
-        textInput(inputId = ns("container_name"),
-                  label = "Container Name", value = ""),
-        H5("Container Port (optional)"),
-        NumericInput.shinyInput(
-          inputId = ns("container_port"),
-          intent = "primary",
-          value = 8081
-        ),
-        actionLink(inputId = ns("start_container_btn"),
-                   "Start Container"),
-        actionLink(inputId = ns("stop_container_btn"),
-                   "Stop Container"))
+        H5("Config Container"),
+        Stack(
+          TextField.shinyInput(inputId = ns("container_name"),
+                    label = "Container Name", value = "alpha_test"),
+          TextField.shinyInput(inputId = ns("container_port"),
+                               label = "Port Number", value = "8081"),
+          horizontal = TRUE,
+          tokens = list(childrenGap = 20)
+        )),
+      br(),
+      Card(
+        interactive = TRUE,
+        H5("Manage Container"),
+        uiOutput(ns("container_list")),
+        br(),
+        Stack(
+          DefaultButton.shinyInput(inputId = ns("start_container_btn"),
+                                   text = "Start Container"),
+          DefaultButton.shinyInput(inputId = ns("stop_container_btn"),
+                                   text = "Stop Container"),
+          DefaultButton.shinyInput(inputId = ns("delete_container_btn"),
+                                   text = "Delete Container"),
+          horizontal = TRUE,
+          tokens = list(childrenGap = 20)
+        ))
       )
     ))
   )
@@ -70,6 +84,24 @@ server <- function(id) {
         div(class = "error", "Unable to connect with Docker API")
       })
     })
+    
+    output$container_list <- renderUI({
+      tryCatch({
+        url <- "http://localhost:2375/v1.41/containers/json"
+        response <- GET(url, add_headers(headers))
+        containers <- unlist(process_response(response)$Names)
+        Select.shinyInput(
+          inputId = ns("select_containers"),
+          items = containers,
+          selected = containers[1],
+          noResults = "Not available"
+        )
+      }, error = function(e) {
+        # Error handling code
+        div(class = "error", "Unable to connect with Docker API")
+      })
+    })
+    
     # Function to handle API call errors
     handle_api_error <- function(response) {
       if (inherits(response, "response")) {
