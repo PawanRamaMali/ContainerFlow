@@ -162,6 +162,22 @@ server <- function(id) {
       response <- POST(url, add_headers(headers), body = NULL)
       output$response <- renderPrint(content(response, "text"))
     })
+    # Stop Container
+    observeEvent(input$stop_container_btn, {
+      req(input$container_name)
+      print(paste("Stopping container:", input$container_name))
+      url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/stop")
+      response <- POST(url, add_headers(headers), body = NULL)
+      output$response <- renderPrint(content(response, "text"))
+    })
+    # Kill Container
+    observeEvent(input$stop_container_btn, {
+      req(input$container_name)
+      print(paste("Killing container:", input$container_name))
+      url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/kill")
+      response <- POST(url, add_headers(headers), body = NULL)
+      output$response <- renderPrint(content(response, "text"))
+    })
     # Function to handle API call errors
     handle_api_error <- function(response) {
       if (inherits(response, "response")) {
