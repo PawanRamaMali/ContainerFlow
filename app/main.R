@@ -134,28 +134,39 @@ server <- function(id) {
     # Create Container
     observeEvent(input$create_container_btn, {
       req(input$container_name)
-      print(paste("Creating container : ",input$container_name))
-      url <- paste0(baseURL, "create?name=", input$container_name)
-      body <- list(
-        Hostname = "localhost",
-        ExposedPorts = list("3838/tcp" = list()),
-        HostConfig = list(
-          PortBindings = list("3838/tcp" = list(list("HostPort" = paste0(input$container_port))))
-        ),
-        Image = paste0(input$select_images)
-      )
-      print(paste("Selected Image is ", input$select_images))
-      response <- POST(url, add_headers(headers), body = toJSON(body))
-      output$response <- renderPrint(handleAPICallError(response))
+      print(paste("Creating container:", input$container_name))
+      
+      url <- "http://localhost:2375/v1.41/containers/create"
+      params <- list(name = input$container_name)
+      body <- paste0('{
+        "Hostname": "localhost",
+        "ExposedPorts": {
+          "3838/tcp": {}
+        },
+        "HostConfig": {
+          "PortBindings": {
+            "3838/tcp": [
+              {
+                "HostPort": "' ,as.numeric(input$container_port), '"
+              }
+            ]
+          }
+        },
+        "Image": "',as.character(input$select_images) , '"
+      }')
+      
+      response <- POST(url, query = params, add_headers(headers), body = body)
+      output$response <- renderPrint(content(response, "text"))
     })
     
     # Start Container
     observeEvent(input$start_container_btn, {
       req(input$container_name)
-      print(paste("Starting container : ",input$container_name))
-      url <- paste0(baseURL, input$containerName, "/start")
-      response <- POST(url, add_headers(headers), body = "")
-      output$response <- renderPrint(handleAPICallError(response))
+      print(paste("Starting container:", input$container_name))
+      
+      url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/start")
+      response <- POST(url, add_headers(headers), body = NULL)
+      output$response <- renderPrint(content(response, "text"))
     })
     
     # Function to handle API call errors
