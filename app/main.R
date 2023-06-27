@@ -70,6 +70,7 @@ ui <- function(id) {
         tagList(
           Button.shinyInput(ns("logs"), "View logs"),
           reactOutput(ns("logs_ui")),
+          br(),
           verbatimTextOutput("response")
         ),
         )
@@ -133,6 +134,7 @@ server <- function(id) {
     # Create Container
     observeEvent(input$create_container_btn, {
       req(input$container_name)
+      print(paste("Creating container : ",input$container_name))
       url <- paste0(baseURL, "create?name=", input$container_name)
       body <- list(
         Hostname = "localhost",
@@ -150,6 +152,7 @@ server <- function(id) {
     # Start Container
     observeEvent(input$start_container_btn, {
       req(input$container_name)
+      print(paste("Starting container : ",input$container_name))
       url <- paste0(baseURL, input$containerName, "/start")
       response <- POST(url, add_headers(headers), body = "")
       output$response <- renderPrint(handleAPICallError(response))
