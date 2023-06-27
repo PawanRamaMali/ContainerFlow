@@ -2,3 +2,5 @@
 library(rhino)
 library(shiny.blueprint)
 library(shiny.fluent)
+library(httr)
+library(jsonlite)
