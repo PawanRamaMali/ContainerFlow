@@ -83,7 +83,7 @@ ui <- function(id) {
 server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    baseURL <- "http://localhost:2375/v1.41/containers/"
+    base_url <- "http://localhost:2375/v1.41/containers/"
     headers <- c("Content-Type" = "application/json")
     logs <- Pre(
       "[11:53:30] Finished 'typescript-bundle-blueprint' after 769 ms\n",
@@ -113,7 +113,6 @@ server <- function(id) {
         div(class = "error", "Unable to connect with Docker API")
       })
     })
-    
     output$container_list <- renderUI({
       tryCatch({
         url <- "http://localhost:2375/v1.41/containers/json"
@@ -130,12 +129,10 @@ server <- function(id) {
         div(class = "error", "Unable to connect with Docker API")
       })
     })
-    
     # Create Container
     observeEvent(input$create_container_btn, {
       req(input$container_name)
       print(paste("Creating container:", input$container_name))
-      
       url <- "http://localhost:2375/v1.41/containers/create"
       params <- list(name = input$container_name)
       body <- paste0('{
@@ -147,28 +144,24 @@ server <- function(id) {
           "PortBindings": {
             "3838/tcp": [
               {
-                "HostPort": "' ,as.numeric(input$container_port), '"
+                "HostPort": "' , as.numeric(input$container_port), '"
               }
             ]
           }
         },
-        "Image": "',as.character(input$select_images) , '"
+        "Image": "', as.character(input$select_images), '"
       }')
-      
       response <- POST(url, query = params, add_headers(headers), body = body)
       output$response <- renderPrint(content(response, "text"))
     })
-    
     # Start Container
     observeEvent(input$start_container_btn, {
       req(input$container_name)
       print(paste("Starting container:", input$container_name))
-      
       url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/start")
       response <- POST(url, add_headers(headers), body = NULL)
       output$response <- renderPrint(content(response, "text"))
     })
-    
     # Function to handle API call errors
     handle_api_error <- function(response) {
       if (inherits(response, "response")) {
