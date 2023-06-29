@@ -1,7 +1,7 @@
 box::use(
   shiny[bootstrapPage, div, moduleServer, NS, renderUI, tags, uiOutput, fluidRow,
         fluidPage, column, br, textInput, actionLink, observeEvent, tagList,
-        reactiveVal, req, renderPrint, verbatimTextOutput, ],
+        reactiveVal, req, renderPrint, verbatimTextOutput, renderText, ],
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button, Pre, Collapse,
                   Card, Select.shinyInput, H4, H5, renderReact, Button.shinyInput,
                   reactOutput, ],
@@ -71,7 +71,7 @@ ui <- function(id) {
           Button.shinyInput(ns("logs"), "View logs"),
           reactOutput(ns("logs_ui")),
           br(),
-          verbatimTextOutput("response")
+          uiOutput("message")
         ),
         )
       )
@@ -151,8 +151,10 @@ server <- function(id) {
         },
         "Image": "', as.character(input$select_images), '"
       }')
-      response <- POST(url, query = params, add_headers(headers), body = body)
-      output$response <- renderPrint(content(response, "text"))
+      response <<- POST(url, query = params, add_headers(headers), body = body)
+      output$message <- renderUI(
+        p(content(response))
+        )
     })
     # Start Container
     observeEvent(input$start_container_btn, {
@@ -160,7 +162,10 @@ server <- function(id) {
       print(paste("Starting container:", input$container_name))
       url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/start")
       response <- POST(url, add_headers(headers), body = NULL)
-      output$response <- renderPrint(content(response, "text"))
+      output$message <- renderUI({
+        h5(content(response))
+      }
+      )
     })
     # Stop Container
     observeEvent(input$stop_container_btn, {
@@ -168,7 +173,9 @@ server <- function(id) {
       print(paste("Stopping container:", input$container_name))
       url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/stop")
       response <- POST(url, add_headers(headers), body = NULL)
-      output$response <- renderPrint(content(response, "text"))
+      output$message <- renderUI(
+        p(content(response))
+      )
     })
     # Kill Container
     observeEvent(input$stop_container_btn, {
@@ -176,7 +183,9 @@ server <- function(id) {
       print(paste("Killing container:", input$container_name))
       url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/kill")
       response <- POST(url, add_headers(headers), body = NULL)
-      output$response <- renderPrint(content(response, "text"))
+      output$message <- renderUI(
+        p(content(response))
+      )
     })
     # Function to handle API call errors
     handle_api_error <- function(response) {
