@@ -30,3 +30,10 @@ Please make sure these packages are installed before running the app.
   Click the "Delete Container" button to delete the selected container.
 - View Logs
   Click the "View Logs" button to toggle the visibility of the container logs.
+
+## Troubleshooting
+If you encounter any errors related to connecting with the Docker API, please ensure that the Docker API is running and accessible.
+Check the R package dependencies and make sure they are installed correctly.
+
+## Disclaimer
+The ContainerFlow app is provided as-is without any guarantees or warranties. Use it at your own risk. The app is intended for educational purposes and should be used responsibly.
