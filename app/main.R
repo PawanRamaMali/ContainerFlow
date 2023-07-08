@@ -4,9 +4,9 @@ box::use(
         reactiveVal, req, renderPrint, verbatimTextOutput, renderText, ],
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button, Pre, Collapse,
                   Card, Select.shinyInput, H4, H5, renderReact, Button.shinyInput,
-                  reactOutput, ],
+                  reactOutput, Toaster, ],
   shiny.fluent[DetailsList, Stack, DefaultButton.shinyInput,
-               TextField.shinyInput, ],
+               TextField.shinyInput, Dropdown.shinyInput, ],
   httr[GET, POST, add_headers, http_type, content, ],
   jsonlite[toJSON, ],
 )
@@ -85,6 +85,7 @@ server <- function(id) {
     ns <- session$ns
     base_url <- "http://localhost:2375/v1.41/containers/"
     headers <- c("Content-Type" = "application/json")
+    toasterTop <- Toaster$new(position = "top")
     logs <- Pre(
       "[11:53:30] Finished 'typescript-bundle-blueprint' after 769 ms\n",
       "[11:53:30] Starting 'typescript-typings-blueprint'...\n",
@@ -102,12 +103,12 @@ server <- function(id) {
         url <- "http://localhost:2375/v1.41/images/json"
         response <- GET(url, add_headers(headers))
         images <- unlist(process_response(response)$RepoTags)
-        Select.shinyInput(
-          inputId = ns("select_images"),
-          items = images,
-          selected = images[1],
-          noResults = "Not available"
-        )
+        options <- lapply(unique(images), function(item) {
+          list(key = item, text = item)
+        })
+        Dropdown.shinyInput(ns("select_images"),
+                            options = options,
+                            value = options[[1]]$key)
       }, error = function(e) {
         # Error handling code
         div(class = "error", "Unable to connect with Docker API")
@@ -118,12 +119,12 @@ server <- function(id) {
         url <- "http://localhost:2375/v1.41/containers/json"
         response <- GET(url, add_headers(headers))
         containers <- unlist(process_response(response)$Names)
-        Select.shinyInput(
-          inputId = ns("select_containers"),
-          items = containers,
-          selected = containers[1],
-          noResults = "Not available"
-        )
+        options <- lapply(unique(containers), function(item) {
+          list(key = item, text = item)
+        })
+        Dropdown.shinyInput(ns("select_containers"),
+                            options = options,
+                            value = options[[1]]$key)
       }, error = function(e) {
         # Error handling code
         div(class = "error", "Unable to connect with Docker API")
@@ -160,6 +161,7 @@ server <- function(id) {
     observeEvent(input$start_container_btn, {
       req(input$container_name)
       print(paste("Starting container:", input$container_name))
+      toasterTop$show(message = "Starting Container !", intent = "primary")
       url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/start")
       response <- POST(url, add_headers(headers), body = NULL)
       output$message <- renderUI({
