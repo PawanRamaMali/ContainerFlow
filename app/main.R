@@ -5,7 +5,7 @@ box::use(
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button, Pre, Collapse,
                   Card, Select.shinyInput, H4, H5, renderReact, Button.shinyInput,
                   reactOutput, Toaster, ],
-  shiny.fluent[DetailsList, Stack, DefaultButton.shinyInput,
+  shiny.fluent[DetailsList, Stack, DefaultButton.shinyInput, Link,
                TextField.shinyInput, Dropdown.shinyInput, ],
   httr[GET, POST, add_headers, http_type, content, ],
   jsonlite[toJSON, ],
@@ -21,7 +21,7 @@ ui <- function(id) {
       ),
       NavbarGroup(
         align = "right",
-        Button(minimal = TRUE, icon = "user"),
+        #Button(minimal = TRUE, icon = "user"),
         Button(minimal = TRUE, icon = "refresh")
       )
     ),
@@ -33,6 +33,23 @@ ui <- function(id) {
         interactive = TRUE,
         H5("Select Image"),
         uiOutput(ns("images_dropdown"))),
+      br(),
+      Card(
+        interactive = TRUE,
+        H5("Deploy Container"),
+        Stack(
+          TextField.shinyInput(inputId = ns("user_name"),
+                               label = "User Name", value = "Name"),
+          br(),
+          DefaultButton.shinyInput(inputId = ns("deploy_container_btn"),
+                                   text = "Deploy Container"),
+          horizontal = TRUE,
+          tokens = list(childrenGap = 20)
+        ),
+        br(),
+        uiOutput(ns("deployed_info")),
+        br()
+      ),
       br(),
       Card(
         interactive = TRUE,
@@ -114,6 +131,83 @@ server <- function(id) {
         div(class = "error", "Unable to connect with Docker API")
       })
     })
+
+    
+    # Global variable to hold the sequence of port numbers
+    available_ports <- 8080:8083
+    
+    # Function to get and remove the next available port number
+    get_port_number <- function() {
+      if (length(available_ports) > 0) {
+        port <- available_ports[1]
+        # Update the global variable by removing the used port number
+        available_ports <<- available_ports[-1]
+        return(port)
+      } else {
+        return(NULL)
+      }
+    }
+    
+    observeEvent(input$deploy_container_btn, {
+      req(input$user_name)
+      print("Checking for available ports . . .")
+      available_port <- get_port_number()
+      
+      if (!is.null(available_port)) {
+        message("Port ", available_port, " is available.")
+      } else {
+        message("No available port found in the list.")
+        toasterTop$show(message = "Failed to deploy Container !", intent = "danger")
+        output$deployed_info <- renderUI({
+          tags$div("No available port found to deploy. Contact R&D")
+        })
+        return(NULL)
+      }
+      # Creating the container
+      print(paste("Creating container:", input$user_name, "on port ",available_port))
+      url <- "http://localhost:2375/v1.41/containers/create"
+      params <- list(name = input$user_name)
+      body <- paste0('{
+        "Hostname": "localhost",
+        "ExposedPorts": {
+          "3838/tcp": {}
+        },
+        "HostConfig": {
+          "PortBindings": {
+            "3838/tcp": [
+              {
+                "HostPort": "' , as.numeric(available_port), '"
+              }
+            ]
+          }
+        },
+        "Image": "', as.character(input$select_images), '"
+      }')
+      response <<- POST(url, query = params, add_headers(headers), body = body)
+      output$message <- renderUI(
+        p(content(response))
+      )
+      
+      # Deploy the container
+      print(paste("Deploying container:", input$user_name, "on port ",available_port))
+      
+      
+      toasterTop$show(message = "Starting Container !", intent = "primary")
+      url <- paste0("http://localhost:2375/v1.41/containers/", input$user_name, "/start")
+      response <- POST(url, add_headers(headers), body = NULL)
+      output$message <- renderUI({
+        h5(content(response))
+      }
+      )
+      
+      # Show the deployed URL
+      print(paste("Deployed :", input$user_name, "on port ",available_port))
+      toasterTop$show(message = "Deployed Container !", intent = "success")
+        output$deployed_info <- renderUI({
+          Link(target = "_blank", href = paste0("http://localhost:",available_port), paste0("Deployed URL: http://localhost:",available_port))
+        })
+    })
+    
     output$container_list <- renderUI({
       tryCatch({
         url <- "http://localhost:2375/v1.41/containers/json"
