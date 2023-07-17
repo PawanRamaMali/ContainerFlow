@@ -148,10 +148,29 @@ server <- function(id) {
       }
     }
     
+    get_container_name <- function(input_string) {
+      # Remove spaces from the input_string
+      name_without_spaces <- gsub(" ", "_", input_string)
+      # Replace invalid characters (except letters, digits, and underscores) with underscores
+      clean_name <- gsub("[^[:alnum:]_]", "_", name_without_spaces)
+      # Add timestamp to the name
+      timestamp <- gsub("[-: ]", "_", Sys.time())
+      # Combine the cleaned name and timestamp
+      container_name <- paste0(clean_name, "_", timestamp)
+      # Ensure that the name starts with a letter
+      if (!grepl("^[A-Za-z]", container_name)) {
+        container_name <- paste0("A_", container_name)
+      }
+
+      return(container_name)
+    }
+    
     observeEvent(input$deploy_container_btn, {
       req(input$user_name)
       print("Checking for available ports . . .")
       available_port <- get_port_number()
+      container_name <- get_container_name(input$user_name)
+      
       
       if (!is.null(available_port)) {
         message("Port ", available_port, " is available.")
@@ -164,9 +183,9 @@ server <- function(id) {
         return(NULL)
       }
       # Creating the container
-      print(paste("Creating container:", input$user_name, "on port ",available_port))
+      print(paste("Creating container:", container_name, "on port ",available_port))
       url <- "http://localhost:2375/v1.41/containers/create"
-      params <- list(name = input$user_name)
+      params <- list(name = container_name)
       body <- paste0('{
         "Hostname": "localhost",
         "ExposedPorts": {
@@ -189,11 +208,11 @@ server <- function(id) {
       )
       
       # Deploy the container
-      print(paste("Deploying container:", input$user_name, "on port ",available_port))
+      print(paste("Deploying container:", container_name, "on port ",available_port))
       
       
       toasterTop$show(message = "Starting Container !", intent = "primary")
-      url <- paste0("http://localhost:2375/v1.41/containers/", input$user_name, "/start")
+      url <- paste0("http://localhost:2375/v1.41/containers/", container_name, "/start")
       response <- POST(url, add_headers(headers), body = NULL)
       output$message <- renderUI({
         h5(content(response))
@@ -201,7 +220,7 @@ server <- function(id) {
       )
       
       # Show the deployed URL
-      print(paste("Deployed :", input$user_name, "on port ",available_port))
+      print(paste("Deployed :", container_name, "on port ",available_port))
       toasterTop$show(message = "Deployed Container !", intent = "success")
         output$deployed_info <- renderUI({
           Link(target = "_blank", href = paste0("http://localhost:",available_port), paste0("Deployed URL: http://localhost:",available_port))
