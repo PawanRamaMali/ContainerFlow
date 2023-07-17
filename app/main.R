@@ -40,10 +40,9 @@ ui <- function(id) {
         Stack(
           TextField.shinyInput(inputId = ns("user_name"),
                                label = "User Name", value = "Name"),
-          br(),
           DefaultButton.shinyInput(inputId = ns("deploy_container_btn"),
                                    text = "Deploy Container"),
-          horizontal = TRUE,
+          horizontal = FALSE,
           tokens = list(childrenGap = 20)
         ),
         br(),
