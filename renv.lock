@@ -67,6 +67,16 @@
       "Hash": "ae6cbbe1492f4de79c45fce06f967ce8",
       "Requirements": []
     },
+    "askpass": {
+      "Package": "askpass",
+      "Version": "1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e8a22846fff485f0be3770c2da758713",
+      "Requirements": [
+        "sys"
+      ]
+    },
     "backports": {
       "Package": "backports",
       "Version": "1.4.1",
@@ -139,6 +149,16 @@
         "processx"
       ]
     },
+    "checkmate": {
+      "Package": "checkmate",
+      "Version": "2.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ca9c113196136f4a9ca9ce6079c2c99e",
+      "Requirements": [
+        "backports"
+      ]
+    },
     "cli": {
       "Package": "cli",
       "Version": "3.6.1",
@@ -179,6 +199,14 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "e8a1e41acf02548751f45c718d55aa6a",
+      "Requirements": []
+    },
+    "curl": {
+      "Package": "curl",
+      "Version": "5.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2118af9cb164c8d2dddc7b89eaf732d9",
       "Requirements": []
     },
     "cyclocomp": {
@@ -323,6 +351,20 @@
         "promises"
       ]
     },
+    "httr": {
+      "Package": "httr",
+      "Version": "1.4.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7e5e3cbd2a7bc07880c94e22348fb661",
+      "Requirements": [
+        "R6",
+        "curl",
+        "jsonlite",
+        "mime",
+        "openssl"
+      ]
+    },
     "jquerylib": {
       "Package": "jquerylib",
       "Version": "0.1.4",
@@ -439,6 +481,16 @@
       "Repository": "RSPM",
       "Hash": "18e9c28c1d3ca1560ce30658b22ce104",
       "Requirements": []
+    },
+    "openssl": {
+      "Package": "openssl",
+      "Version": "2.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "273a6bb4a9844c296a459d2176673270",
+      "Requirements": [
+        "askpass"
+      ]
     },
     "pillar": {
       "Package": "pillar",
@@ -672,6 +724,49 @@
         "xtable"
       ]
     },
+    "shiny.blueprint": {
+      "Package": "shiny.blueprint",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c3ef4152f87e8598ab28e825b92bd7cf",
+      "Requirements": [
+        "checkmate",
+        "htmltools",
+        "shiny",
+        "shiny.react"
+      ]
+    },
+    "shiny.fluent": {
+      "Package": "shiny.fluent",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "588f81f264112d7c85f9b9e3c92ffc8d",
+      "Requirements": [
+        "htmltools",
+        "jsonlite",
+        "rlang",
+        "shiny",
+        "shiny.react"
+      ]
+    },
+    "shiny.react": {
+      "Package": "shiny.react",
+      "Version": "0.3.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ef9e3966d3cd63ea006296bd7b7d4dcb",
+      "Requirements": [
+        "glue",
+        "htmltools",
+        "jsonlite",
+        "logger",
+        "purrr",
+        "rlang",
+        "shiny"
+      ]
+    },
     "sourcetools": {
       "Package": "sourcetools",
       "Version": "0.1.7-1",
@@ -696,6 +791,14 @@
         "vctrs",
         "withr"
       ]
+    },
+    "sys": {
+      "Package": "sys",
+      "Version": "3.4.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3a1be13d68d47a8cd0bfd74739ca1555",
+      "Requirements": []
     },
     "testthat": {
       "Package": "testthat",
