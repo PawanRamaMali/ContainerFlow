@@ -65,19 +65,22 @@ ui <- function(id) {
       #   DefaultButton.shinyInput(inputId = ns("create_container_btn"),
       #                            text = "Create Container")),
       # br(),
-      Card(
-        interactive = TRUE,
-        H5("Manage Container"),
-        uiOutput(ns("container_list")),
-        br(),
-        Stack(
-          DefaultButton.shinyInput(inputId = ns("stop_container_btn"),
-                                   text = "Stop Container"),
-          DefaultButton.shinyInput(inputId = ns("kill_container_btn"),
-                                   text = "Delete Container"),
-          horizontal = TRUE,
-          tokens = list(childrenGap = 20)
-        )),
+# Manage Container
+     # Card(
+     #    interactive = TRUE,
+     #    H5("Manage Container"),
+     #    uiOutput(ns("container_list")),
+     #    br(),
+     #    Stack(
+     #      DefaultButton.shinyInput(inputId = ns("stop_container_btn"),
+     #                               text = "Stop Container"),
+     #      DefaultButton.shinyInput(inputId = ns("kill_container_btn"),
+     #                               text = "Delete Container"),
+     #      horizontal = TRUE,
+     #      tokens = list(childrenGap = 20)
+     #    )),
+      
+      
       # Card(
       #   interactive = TRUE,
       #   H5("Manage Container"),
