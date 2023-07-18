@@ -4,9 +4,9 @@ box::use(
         reactiveVal, req, renderPrint, verbatimTextOutput, renderText, ],
   shiny.blueprint[Navbar, NavbarGroup, NavbarHeading, Button, Pre, Collapse,
                   Card, Select.shinyInput, H4, H5, renderReact, Button.shinyInput,
-                  reactOutput, Toaster, ],
+                  reactOutput, Toaster, AnchorButton.shinyInput,],
   shiny.fluent[DetailsList, Stack, DefaultButton.shinyInput, Link,
-               TextField.shinyInput, Dropdown.shinyInput, ],
+               TextField.shinyInput, Dropdown.shinyInput, updateDropdown.shinyInput, ],
   httr[GET, POST, add_headers, http_type, content, ],
   jsonlite[toJSON, ],
 )
@@ -22,7 +22,7 @@ ui <- function(id) {
       NavbarGroup(
         align = "right",
         #Button(minimal = TRUE, icon = "user"),
-        Button(minimal = TRUE, icon = "refresh")
+        AnchorButton.shinyInput(inputId = ns("refresh"), minimal = TRUE, icon = "refresh")
       )
     ),
     fluidPage(
@@ -50,46 +50,60 @@ ui <- function(id) {
         br()
       ),
       br(),
-      Card(
-        interactive = TRUE,
-        H5("Create Container"),
-        Stack(
-          TextField.shinyInput(inputId = ns("container_name"),
-                    label = "Container Name", value = "alpha_test"),
-          TextField.shinyInput(inputId = ns("container_port"),
-                               label = "Port Number", value = "8081"),
-          horizontal = TRUE,
-          tokens = list(childrenGap = 20)
-        ),
-        br(),
-        DefaultButton.shinyInput(inputId = ns("create_container_btn"),
-                                 text = "Create Container")),
-      br(),
+      # Card(
+      #   interactive = TRUE,
+      #   H5("Create Container"),
+      #   Stack(
+      #     TextField.shinyInput(inputId = ns("container_name"),
+      #               label = "Container Name", value = "alpha_test"),
+      #     TextField.shinyInput(inputId = ns("container_port"),
+      #                          label = "Port Number", value = "8081"),
+      #     horizontal = TRUE,
+      #     tokens = list(childrenGap = 20)
+      #   ),
+      #   br(),
+      #   DefaultButton.shinyInput(inputId = ns("create_container_btn"),
+      #                            text = "Create Container")),
+      # br(),
       Card(
         interactive = TRUE,
         H5("Manage Container"),
         uiOutput(ns("container_list")),
         br(),
         Stack(
-          DefaultButton.shinyInput(inputId = ns("start_container_btn"),
-                                   text = "Start Container"),
           DefaultButton.shinyInput(inputId = ns("stop_container_btn"),
                                    text = "Stop Container"),
-          DefaultButton.shinyInput(inputId = ns("delete_container_btn"),
+          DefaultButton.shinyInput(inputId = ns("kill_container_btn"),
                                    text = "Delete Container"),
           horizontal = TRUE,
           tokens = list(childrenGap = 20)
         )),
-      br(),
-      Card(
-        interactive = TRUE,
-        tagList(
-          Button.shinyInput(ns("logs"), "View logs"),
-          reactOutput(ns("logs_ui")),
-          br(),
-          uiOutput("message")
-        ),
-        )
+      # Card(
+      #   interactive = TRUE,
+      #   H5("Manage Container"),
+      #   uiOutput(ns("container_list")),
+      #   br(),
+      #   Stack(
+      #     DefaultButton.shinyInput(inputId = ns("start_container_btn"),
+      #                              text = "Start Container"),
+      #     DefaultButton.shinyInput(inputId = ns("stop_container_btn"),
+      #                              text = "Stop Container"),
+      #     DefaultButton.shinyInput(inputId = ns("delete_container_btn"),
+      #                              text = "Delete Container"),
+      #     horizontal = TRUE,
+      #     tokens = list(childrenGap = 20)
+      #   )),
+      br()
+      # ,
+      # Card(
+      #   interactive = TRUE,
+      #   tagList(
+      #     Button.shinyInput(ns("logs"), "View logs"),
+      #     # reactOutput(ns("logs_ui")),
+      #     br(),
+      #     uiOutput(ns("message"))
+      #   ),
+      #   )
       )
     ))
   )
@@ -109,6 +123,9 @@ server <- function(id) {
       "[11:53:30] write ./blueprint.css\n",
       "[11:53:30] Finished 'sass-compile-blueprint' after 2.84 s\n"
     )
+    observeEvent(input$refresh, {
+      session$reload()
+    })
     show <- reactiveVal(FALSE)
     observeEvent(input$logs, show(!show()))
     output$logs_ui <- renderReact({
@@ -133,7 +150,7 @@ server <- function(id) {
 
     
     # Global variable to hold the sequence of port numbers
-    available_ports <- 8080:8083
+    available_ports <- 8000:8100
     
     # Function to get and remove the next available port number
     get_port_number <- function() {
@@ -183,6 +200,7 @@ server <- function(id) {
       }
       # Creating the container
       print(paste("Creating container:", container_name, "on port ",available_port))
+      toasterTop$show(message = "Creating Container !", intent = "primary")
       url <- "http://localhost:2375/v1.41/containers/create"
       params <- list(name = container_name)
       body <- paste0('{
@@ -210,7 +228,7 @@ server <- function(id) {
       print(paste("Deploying container:", container_name, "on port ",available_port))
       
       
-      toasterTop$show(message = "Starting Container !", intent = "primary")
+      
       url <- paste0("http://localhost:2375/v1.41/containers/", container_name, "/start")
       response <- POST(url, add_headers(headers), body = NULL)
       output$message <- renderUI({
@@ -223,6 +241,23 @@ server <- function(id) {
       toasterTop$show(message = "Deployed Container !", intent = "success")
         output$deployed_info <- renderUI({
           Link(target = "_blank", href = paste0("http://localhost:",available_port), paste0("Deployed URL: http://localhost:",available_port))
+        })
+        
+        output$images_dropdown <- renderUI({
+          tryCatch({
+            url <- "http://localhost:2375/v1.41/images/json"
+            response <- GET(url, add_headers(headers))
+            images <- unlist(process_response(response)$RepoTags)
+            options <- lapply(unique(images), function(item) {
+              list(key = item, text = item)
+            })
+            Dropdown.shinyInput(ns("select_images"),
+                                options = options,
+                                value = options[[1]]$key)
+          }, error = function(e) {
+            # Error handling code
+            div(class = "error", "Unable to connect with Docker API")
+          })
         })
     })
     
@@ -283,23 +318,24 @@ server <- function(id) {
     })
     # Stop Container
     observeEvent(input$stop_container_btn, {
-      req(input$container_name)
-      print(paste("Stopping container:", input$container_name))
-      url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/stop")
+      print(paste("Stopping container:", input$select_containers))
+      url <- paste0("http://localhost:2375/v1.41/containers", input$select_containers, "/stop")
       response <- POST(url, add_headers(headers), body = NULL)
       output$message <- renderUI(
         p(content(response))
       )
+      toasterTop$show(message = "Container Stopped !", intent = "danger")
     })
     # Kill Container
-    observeEvent(input$stop_container_btn, {
-      req(input$container_name)
-      print(paste("Killing container:", input$container_name))
-      url <- paste0("http://localhost:2375/v1.41/containers/", input$container_name, "/kill")
+    observeEvent(input$kill_container_btn, {
+      print(paste("Killing container:", input$select_containers))
+      url <- paste0("http://localhost:2375/v1.41/containers", input$select_containers, "/kill")
       response <- POST(url, add_headers(headers), body = NULL)
       output$message <- renderUI(
         p(content(response))
       )
+      session$reload()
+      toasterTop$show(message = "Container Deleted !", intent = "danger")
     })
     # Function to handle API call errors
     handle_api_error <- function(response) {
