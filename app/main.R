@@ -181,6 +181,21 @@ server <- function(id) {
       return(container_name)
     }
     
+    # Function to get the current public IP address
+    get_current_ip <- function() {
+      url <- "https://api64.ipify.org?format=json"
+      response <- GET(url)
+      
+      # Check if the request was successful
+      if (http_type(response) == "application/json") {
+        ip_info <- content(response, "parsed")
+        current_ip <- ip_info$ip
+        return(current_ip)
+      } else {
+        return(NULL)
+      }
+    }
+    
     observeEvent(input$deploy_container_btn, {
       req(input$user_name)
       print("Checking for available ports . . .")
@@ -236,11 +251,13 @@ server <- function(id) {
       }
       )
       
+      # Call the function to get the current IP address
+      current_ip_address <- get_current_ip()
       # Show the deployed URL
       print(paste("Deployed :", container_name, "on port ",available_port))
       toasterTop$show(message = "Deployed Container !", intent = "success")
         output$deployed_info <- renderUI({
-          Link(target = "_blank", href = paste0("http://localhost:",available_port), paste0("Deployed URL: http://localhost:",available_port))
+          Link(target = "_blank", href = paste0("http://", current_ip_address,":",available_port), paste0("Deployed to http://", current_ip_address,":",available_port))
         })
         
         output$images_dropdown <- renderUI({
