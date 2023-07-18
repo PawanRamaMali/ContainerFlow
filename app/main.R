@@ -283,7 +283,7 @@ server <- function(id) {
         url <- "http://localhost:2375/v1.41/containers/json"
         response <- GET(url, add_headers(headers))
         containers <- unlist(process_response(response)$Names)
-        options <- lapply(unique(containers), function(item) {
+        options <- lapply(containers, function(item) {
           list(key = item, text = item)
         })
         Dropdown.shinyInput(ns("select_containers"),
@@ -291,7 +291,7 @@ server <- function(id) {
                             value = options[[1]]$key)
       }, error = function(e) {
         # Error handling code
-        div(class = "error", "Unable to connect with Docker API")
+        div(class = "error", "Unable to find any containers")
       })
     })
     # Create Container
