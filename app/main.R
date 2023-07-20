@@ -226,6 +226,9 @@ server <- function(id) {
         "ExposedPorts": {
           "3838/tcp": {}
         },
+        "Volumes": {
+          "/root/app/pyFolder/": "/root/app/pyFolder/"
+        },
         "HostConfig": {
           "PortBindings": {
             "3838/tcp": [
